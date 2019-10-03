@@ -1,0 +1,117 @@
+### Question 1
+#### (a)i
+```{r}
+x<-c()
+x[55:58]<-c(55,56,57,58)
+qx<-c()
+qx[55:57] <- c(0.001046, 0.001199,0.001375)
+```
+calculate the life table corresponding to these $q_x$ values
+```{r}
+lx<-c()
+lx[55]<-100000
+dx<-c()
+for (i in 55:58) {
+  dx[i]<-lx[i]*qx[i]
+  lx[i+1]<-lx[i]-dx[i]
+}
+```
+print the details
+```{r}
+table<-cbind(x[55:58],qx[55:58],lx[55:58])
+colnames(table)<-c("x","qx","lx")
+table
+```
+the increasing rate $i=1.92308\%$ and the interest on valuation basis is 6%
+```{r}
+i<-(1+0.06)/(1+0.0192308)-1
+v<-1/(1+i)
+d<-1-v
+```
+$${a}_{x+t\,\overline{n-t}|}=\frac{v-{A}_{x+t\,\overline{n-t}|}}{d}$$
+```{r}
+A<-c()
+A[55:56]<- c(0.889132,0.924607)
+a<-c()
+a[55:56]<-(v-A[55:56])/d
+a[55:56]
+```
+For this three year temporary annuities, need:
+1.Premium
+2.Expenses
+3.Benefits
+4.Policy values
+```{r}
+premium<-c()
+premium[55:57]<-c(40250,0,0)
+exp_i<-c()
+exp_i[55:57]<-c(rep(0,3))
+exp_i[55]<-100+0.015*premium[55]
+exp_a<-c()
+for (i in 55:57) {
+  exp_a[i]<-10*(1+0.05)^(i-55)
+}
+benefit<-c()
+for (i in 55:57) {
+  benefit[i]<- 15000*(1+0.0192308)^(x[i]-55)
+}
+policyvalue<-c()
+policyvalue[55:56]<-benefit[55:56]*a[55:56]
+policyvalue[57]<-0
+```
+set a table
+```{r}
+table<-cbind(x[55:57],premium[55:57],exp_i[55:57],exp_a[55:57],benefit[55:57],policyvalue[55:57])
+colnames(table)<-c("x","premium","expenses_i","expenses_a","benefit","policy value")
+table
+```
+calculate enpected amoumt
+1.Expected Premium
+2.Expected Expenses
+3.Expected Benefits
+4.Expected Policy values
+```{r}
+Eprem<-c()
+for (i in 55:57) {
+  Eprem[i]<-premium[i]*lx[i]/lx[55]
+}
+Eexp_i<-c()
+for (i in 55:57) {
+  Eexp_i[i]<-exp_i[i]*lx[i]/lx[55]
+}
+Eexp_a<-c()
+for (i in 55:57) {
+  Eexp_a[i]<-exp_a[i]*lx[i]/lx[55]
+}
+Ebenefit<-c()
+for (i in 55:57) {
+  Ebenefit[i]<-benefit[i]*lx[i+1]/lx[55]
+}
+Epolicyvalue<-c()
+for (i in 55:57) {
+  Epolicyvalue[i]<-policyvalue[i]*lx[i+1]/lx[55]
+}
+interest<-c()
+interest[55]<-0.08*(Eprem[55]-Eexp_i[55])
+interest[56:57]<-0.08*(Eprem[56:57]+Epolicyvalue[55:56]-Eexp_i[56:57])
+transfer<-c()
+transfer[55]<-Eprem[55]+interest[55]-Eexp_a[55]-Eexp_i[55]-Epolicyvalue[55]-Ebenefit[55]
+transfer[56:57]<-Eprem[56:57]+Epolicyvalue[55:56]+interest[56:57]-Eexp_a[56:57]-Eexp_i[56:57]-Epolicyvalue[56:57]-Ebenefit[56:57]
+```
+set a table
+```{r}
+table<-cbind(x[55:57],Eprem[55:57],Eexp_i[55:57],Eexp_a[55:57],Ebenefit[55:57],Epolicyvalue[55:57],interest[55:57],transfer[55:57])
+colnames(table)<-c("x","Epremium","Eexpenses_i","Eexpenses_a","Ebenefit","Epolicy value","interest","transfer")
+table
+```
+#### (a)ii
+```{r}
+sum<-sum(transfer[55:57]*1.12^(-c(1:3)))
+sum
+sum/Eprem[55]
+```
+#### (b)
+```{r}
+IRR<-function(p) sum((1+p)^(-c(1:3))*trnsfr_EOY[55:57])
+uniroot(IRR,c(0.4,0.6))
+```
