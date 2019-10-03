@@ -1,0 +1,107 @@
+
+### Question 3
+calculate the insurance charge per dollar at age x
+```{r}
+charge<-c()
+charge<-q.x_d*1.2
+table<-cbind(x[30:39],charge[30:39])
+colnames(table)<-c("x","charge")
+table
+```
+non-unit fund for an in-force policy
+```{r}
+suminsured<-20000
+charge_BOY<-c()
+charge_BOY<-suminsured*charge
+expenses_BOY<-c()
+expenses_BOY[30]<-5000*0.45+75
+for (j in 31:39) {
+  expenses_BOY[j]<- 75*(1+0.25)^(j-30)
+}
+```
+unit fund for an in-force policy
+```{r}
+IP_BOY<-c()
+IP_BOY<-IP-charge_BOY
+i<-0.1
+VU_BOY<-c()
+VU_BOY[30]<-IP_BOY[30]*(1+i)*(1-m)
+for (j in 31:39) {
+  VU_BOY[j]<-(VU_BOY[j-1]+IP_BOY[j])*(1+i)*(1-m)
+}
+table<-cbind(x[30:39],IP_BOY[30:39],VU_BOY[30:39])
+colnames(table)<-c("x","IP_BOY","VU_BOY")
+table
+```
+expected amounts per initial policy
+```{r}
+EIP_BOY<-c()
+for (i in 30:39) {
+  EIP_BOY[i]<-IP_BOY[i]*al.x[i]/al.x[30]
+}
+EVU_BOY<-c()
+for (i in 30:39) {
+  EVU_BOY[i]<-VU_BOY[i]*al.x[i+1]/al.x[30]
+}
+i<-0.1
+interest_EOY<-c()
+interest_EOY[30]<-EIP_BOY[30]*i
+for (j in 31:39) {
+  interest_EOY[j]<-i*(EVU_BOY[j-1]+EIP_BOY[j])
+}
+transfer_EOY<-c()
+transfer_EOY[30]<-EIP_BOY[30]+interest_EOY[30]-EVU_BOY[30]
+for (i in 31:39) {
+  transfer_EOY[i]<-EVU_BOY[i-1]+EIP_BOY[i]+interest_EOY[i]-EVU_BOY[i]
+}
+table<-cbind(x[30:39],EIP_BOY[30:39],interest_EOY[30:39],EVU_BOY[30:39],transfer_EOY[30:39])
+colnames(table)<-c("x","EIP_BOY","interest_EOY","EVU_BOY","transfer_EOY")
+table
+```
+non-unit fund for an in-force policy
+```{r}
+deathBFT<-c()
+deathBFT<-suminsured+VU_BOY
+surrenderBFT<-c()
+surrenderBFT<-VU_BOY
+table<-cbind(x[30:39],fee[30:39],margin[30:39],charge_BOY[30:39],expenses_BOY[30:39],deathBFT[30:39],surrenderBFT[30:39])
+colnames(table)<-c("x","fee","margin","charge_BOY","expenses_BOY","deathBFT","surrenderBFT")
+table
+```
+expected amounts per initial policy
+```{r}
+Efee<-c()
+for (i in 30:39) {
+  Efee[i]<-fee[i]*al.x[i]/al.x[30]
+}
+Emargin<-c()
+for (i in 30:39) {
+  Emargin[i]<-margin[i]*al.x[i]/al.x[30]
+}
+Echarge_BOY<-c()
+Echarge_BOY[30:39]<-charge_BOY[30:39]*al.x[30:39]/al.x[30]
+Eexpenses_BOY<-c()
+for (i in 30:39) {
+  Eexpenses_BOY[i]<-expenses_BOY[i]*al.x[i]/al.x[30]
+}
+Einterest_EOY<-c()
+Einterest_EOY[30:39]<-0.08*(Efee[30:39]+Emargin[30:39]+Echarge_BOY[30:39]-Eexpenses_BOY[30:39])
+Edeathbenefit<-c()
+for (i in 30:39) {
+  Edeathbenefit[i]<-deathBFT[i]*ad.x_d[i]/al.x[30]
+}
+Esurrenderbenefit<-c()
+for (i in 30:39) {
+  Esurrenderbenefit[i]<-surrenderBFT[i]*ad.x_w[i]/al.x[30]
+}
+trnsfr_EOY<-c()
+trnsfr_EOY[30:39]<-Efee[30:39]+Emargin[30:39]-Eexpenses_BOY[30:39]+Einterest_EOY[30:39]+Echarge_BOY[30:39]-Edeathbenefit[30:39]-Esurrenderbenefit[30:39]+transfer_EOY[30:39]
+trnsfr_EOY[30:39]
+```
+
+```{r}
+sum<-sum(trnsfr_EOY[30:39]*1.125^(-c(1:10)))
+sum
+IRR<-function(p) sum((1+p)^(-c(1:10))*trnsfr_EOY[30:39])
+uniroot(IRR,c(-2,1))
+```
